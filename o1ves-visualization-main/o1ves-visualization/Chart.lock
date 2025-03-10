@@ -1,0 +1,12 @@
+dependencies:
+- name: grafana
+  repository: https://grafana.github.io/helm-charts
+  version: 6.56.6
+- name: influxdb2
+  repository: https://helm.influxdata.com/
+  version: 2.1.1
+- name: dmaap-influxdb-adapter
+  repository: file://../dmaap-influxdb-adapter
+  version: 0.1.0
+digest: sha256:7e38a6f683c6202203377d5533cf4131ba40a1de1466312206f44d926bd4933a
+generated: "2023-08-04T18:25:26.453113443Z"

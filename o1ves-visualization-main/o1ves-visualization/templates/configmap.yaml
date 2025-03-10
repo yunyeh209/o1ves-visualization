@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "o1ves-visualization.fullname" . }}-grafana-ds-prov
+data:
+  grafana-ds-prov.sh: |-
+    {{ tpl (.Files.Get "resources/grafana-ds-prov.sh") . | nindent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "o1ves-visualization.fullname" . }}-influxdb-config
+data:
+  influxdb-config.sh: |-
+    {{ tpl (.Files.Get "resources/influxdb-config.sh") . | nindent 4 }}
+---
