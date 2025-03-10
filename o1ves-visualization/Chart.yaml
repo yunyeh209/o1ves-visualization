@@ -1,0 +1,19 @@
+apiVersion: v2
+appVersion: 0.1.0
+dependencies:
+- condition: grafana.enabled
+  name: grafana
+  repository: https://grafana.github.io/helm-charts
+  version: 6.56.*
+- condition: influxdb2.enabled
+  name: influxdb2
+  repository: https://helm.influxdata.com/
+  version: 2.1.1
+- condition: dmaap-influxdb-adapter.enabled
+  name: dmaap-influxdb-adapter
+  repository: file://../dmaap-influxdb-adapter
+  version: 0.1.0
+description: A Helm chart for O1 VES Visualization
+name: o1ves-visualization
+type: application
+version: 0.1.0

@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "dmaap-influxdb-adapter.fullname" . }}
+  labels:
+    {{- include "dmaap-influxdb-adapter.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "dmaap-influxdb-adapter.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "dmaap-influxdb-adapter.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: MR_HOST
+            value: "{{ .Values.messagerouter.host }}"
+          - name: MR_PORT
+            value: "{{ .Values.messagerouter.port }}"
+          - name: CONSUMER_GROUP
+            value: "{{ .Values.messagerouter.consumerGroup }}"
+          {{ if .Values.messagerouter.consumerId }}
+          - name: CONSUMER_ID
+            value: "{{ .Values.messagerouter.consumerId }}"
+          {{ end }}
+          - name: POLLING_INTERVAL
+            value: "{{ .Values.pullInterval }}"
+          - name: INFLUXDB_HOST
+            value: "{{ .Values.influxdb.host }}"
+          - name: INFLUXDB_PORT
+            value: "{{ .Values.influxdb.port }}"
+          - name: INFLUXDB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.influxdb.tokenSecret }}
+                key: {{ .Values.influxdb.tokenKey }}
+          - name: INFLUXDB_ORG
+            value: "{{ .Values.influxdb.org }}"
+          - name: LOG_LEVEL
+            value: "{{ .Values.logLevel }}"
+          volumeMounts:
+            - name: dmaap-influxdb-adapter-rules
+              mountPath: /app/rules.yml
+              subPath: rules.yml
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: dmaap-influxdb-adapter-rules
+          configMap:
+            name: {{ include "dmaap-influxdb-adapter.fullname" . }}-rules
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

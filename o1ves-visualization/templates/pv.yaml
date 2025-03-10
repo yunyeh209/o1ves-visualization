@@ -1,0 +1,33 @@
+{{if eq .Values.influxdb2.persistence.storageClass "local-storage-influxdb2" }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ include "o1ves-visualization.fullname" . }}-influxdb2
+  labels:
+    type: local
+spec:
+  storageClassName: {{ .Values.influxdb2.persistence.storageClass  }}
+  capacity:
+    storage: {{ .Values.influxdb2.persistence.size }}
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /dockerdata-nfs/{{ include "o1ves-visualization.fullname" . }}-influxdb
+{{ end }}
+---
+{{if eq .Values.grafana.persistence.storageClassName "local-storage-grafana" }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ include "o1ves-visualization.fullname" . }}-grafana
+  labels:
+    type: local
+spec:
+  storageClassName: {{ .Values.grafana.persistence.storageClassName  }}
+  capacity:
+    storage: {{ .Values.grafana.persistence.size }}
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /dockerdata-nfs/{{ include "o1ves-visualization.fullname" . }}-grafana
+{{ end }}

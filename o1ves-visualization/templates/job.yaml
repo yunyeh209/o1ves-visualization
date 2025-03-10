@@ -1,0 +1,85 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "o1ves-visualization.fullname" . }}-grafana-datasource-provisioning
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      initContainers:
+        - name: grafana-ds-prov-init-readiness
+          image: busybox
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:  ["sh", "-c", "until nc -z {{ .Release.Namespace }}-grafana 80 > /dev/null; do echo Waiting for master.; sleep 2; done;"]
+      containers:
+        - name: grafana-ds-prov
+          image: curlimages/curl
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: 
+          - /bin/sh
+          args:
+          - /app/grafana-ds-prov.sh
+          env:
+            - name: INFLUXDB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-influxdb2-auth
+                  key: admin-token
+            - name: GRAFANA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-grafana
+                  key: admin-password
+            - name: GRAFANA_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-grafana
+                  key: admin-user
+          volumeMounts:
+          - name: grafana-datasource-provisioning
+            mountPath: /app/grafana-ds-prov.sh
+            subPath: grafana-ds-prov.sh
+
+      volumes:
+        - name: grafana-datasource-provisioning
+          configMap:
+            name: {{ include "o1ves-visualization.fullname" . }}-grafana-ds-prov
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "o1ves-visualization.fullname" . }}-influxdb2-config
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      initContainers:
+        - name: influxdb2-config-init-readiness
+          image: busybox
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:  ["sh", "-c", "until nc -z {{ .Release.Namespace }}-influxdb2 80 > /dev/null; do echo Waiting for master.; sleep 2; done;"]
+      containers:
+        - name: influxdb2-config
+          image: {{ .Values.influxdb2.image.repository }}:{{ .Values.influxdb2.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: 
+          - /bin/sh
+          args:
+          - /app/influxdb-config.sh
+          env:
+            - name: INFLUXDB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-influxdb2-auth
+                  key: admin-token
+            - name: INFLUXDB_ORG
+              value: "{{ index .Values "dmaap-influxdb-adapter" "influxdb" "org" }}"     
+          volumeMounts:
+          - name: influxdb-config
+            mountPath: /app/influxdb-config.sh
+            subPath: influxdb-config.sh
+
+      volumes:
+        - name: influxdb-config
+          configMap:
+            name: {{ include "o1ves-visualization.fullname" . }}-influxdb-config
